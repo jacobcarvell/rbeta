@@ -1,5 +1,5 @@
 
-# This script calculates the beta of any stock using data from yahoo finance (via quandl).
+# This script calculates the capm, beta and sml of any stock using data from yahoo finance (via quandl).
 
 # required libraries
 library(ggplot2)
@@ -11,14 +11,14 @@ percReturn <- function(Price){
   # Data needs to be passed to the function ordered
   # Data also needs to be in a vector format
   result = numeric()
-
+  
   for (i in 2:length(Price)) {
     item = (Price[i] - Price[i-1]) / Price[i-1]
     result = c(result, item)
   }
-
+  
   return(result)
-
+  
 }
 
 # prompt the user for both the stock code and the index code
@@ -79,7 +79,7 @@ betaData = data.frame(lsDate, stockReturn, indexReturn)
 
 fit = lm(betaData[["stockReturn"]] ~ betaData[["indexReturn"]])
 beta = coefficients(fit)[2]
-print(beta)
+rsquared = summary(fit)$r.squared
 
 # plot the result
 
@@ -90,3 +90,42 @@ p = p + ggtitle(paste("Scatterplot of", stockCode, "vs.", indexCode, "return as 
 print(p)
 
 ggsave(paste("beta", stockCode, "vs.", indexCode, "as perc.png"))
+
+# Get the 10 year treasury bond data from RBA to estimate risk free rate for capm
+
+rba = Quandl("RBA/F02_1")
+indexRBA = rba[,'Date']
+
+govBonds = xts(rba[5], indexRBA)
+govBonds = govBonds[paste(dateFrom,"/",dateTo, sep = "")]
+
+rf = colMeans(govBonds) / 100
+
+# Calculate the market risk premium
+
+rm = (length(indexReturn)-1)*mean(indexReturn)
+
+indexofIndex = cleanedIndex[,'Date']
+annualIndex = xts(cleanedIndex[7], indexofIndex)
+
+startIndex = as.vector(annualIndex[xts:::startof(annualIndex, "years")])
+endIndex = as.vector(annualIndex[xts:::endof(annualIndex, "years")])
+
+marketReturn = (endIndex-startIndex)/startIndex
+
+rm_arith = mean(marketReturn)
+rm_geom = prod(marketReturn)^(1/length(marketReturn))
+
+capm = rf + beta * (rm - rf)
+
+names(beta) = "Beta"
+names(rsquared) = "r-squared"
+names(rf) = "Risk-free Rate"
+names(rm) = "Return on market portfolio"
+names(capm) = "Expected Return (CAPM)"
+
+print(beta)
+print(rsquared)
+print(rf)
+print(rm)
+print(capm)

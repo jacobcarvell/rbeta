@@ -6,6 +6,7 @@ require(ggplot2)
 require(Quandl)
 require(rvest)
 require(xts)
+require(corrplot)
 
 # Enter your api key here to allow for more than 50 calls per day
 Quandl.api_key("jSb_BspV8cKfsYKk_68t")
@@ -114,9 +115,10 @@ stockCorr <- function(tickers) {
     
   }
   
-  # create the correlation matrix for the stocks
+  # create the correlation matrix for the stocks and plot
   
-  corrMat = []
+  corrMatrix = cor(dataTable[,-1])
+  corrplot(corrMatrix, method = "circle", order = "hclust", addrect = 5)
   
-  return(dataTable)
+  return(corrMatrix)
 }

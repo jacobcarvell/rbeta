@@ -9,7 +9,7 @@ require(xts)
 require(corrplot)
 
 # Enter your api key here to allow for more than 50 calls per day
-Quandl.api_key("jSb_BspV8cKfsYKk_68t")
+Quandl.api_key("")
 
 # calculate the percentage return from a list of ordered data
 
